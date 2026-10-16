@@ -1,0 +1,86 @@
+# Traditional system design topic. Copy with: explainer new my-topic --kind system_design
+# Keep total narration under ~700 words (5 minutes). Check with: explainer validate my-topic
+#
+# Every section needs: role, heading, narration, visual.
+# Visual types: title, bullets, cards, diagram, table, array (see README for all options).
+# `cue` = a phrase copied exactly from the narration; the item appears when it is spoken.
+kind: system_design
+title: Design a URL Shortener
+
+sections:
+  - role: hook
+    heading: ""
+    narration: >
+      One or two sentences on why this problem is interesting.
+    visual: {type: title, title: Design a URL Shortener, subtitle: "One line on what we'll learn"}
+
+  - role: functional
+    heading: Functional requirements
+    narration: >
+      What the system must do, said in plain words.
+    visual:
+      type: bullets
+      items:
+        - {text: "First feature", cue: first phrase}
+        - {text: "Second feature", cue: second phrase}
+
+  - role: non_functional
+    heading: Non-functional requirements
+    narration: >
+      Scale, latency, availability, consistency, with rough numbers.
+    visual:
+      type: cards
+      items:
+        - {title: "100M reads/day", body: "Read heavy, 100:1", tone: data}
+        - {title: "p99 < 50ms", body: "Redirects must feel instant"}
+
+  - role: high_level
+    heading: High-level design
+    narration: >
+      Walk through the simplest design that works, component by component.
+    visual:
+      type: diagram
+      nodes:   # col/row place boxes on a grid; shape: box | db | queue
+        - {id: client, label: Client, col: 0, row: 0, tone: accent}
+        - {id: api, label: API service, col: 1, row: 0}
+        - {id: db, label: Database, col: 2, row: 0, shape: db, tone: data}
+      edges:
+        - [client, api]
+        - {from: api, to: db, label: reads/writes}
+
+  - role: issues
+    heading: What breaks at scale
+    narration: >
+      Name at most three problems with the simple design.
+    visual:
+      type: cards
+      numbered: true
+      tone: danger
+      items:
+        - {title: "Problem one", body: "Why it hurts"}
+        - {title: "Problem two", body: "Why it hurts"}
+        - {title: "Problem three", body: "Why it hurts"}
+
+  # One deep_dive per issue (1 to 3 of them).
+  - role: deep_dive
+    heading: "Fix 1: ..."
+    narration: >
+      How the design changes to solve problem one, and the trade-off.
+    visual:
+      type: diagram
+      nodes:
+        - {id: api, label: API service, col: 0, row: 0}
+        - {id: cache, label: Cache, col: 1, row: 0, tone: good}
+      edges: [[api, cache]]
+      highlight: [cache]
+      note: "One-line takeaway"
+
+  - role: extensions
+    heading: Go further on your own
+    narration: >
+      A handful of directions to study on your own.
+    visual:
+      type: bullets
+      items:
+        - {text: "Extension one", tone: extra}
+        - {text: "Extension two", tone: extra}

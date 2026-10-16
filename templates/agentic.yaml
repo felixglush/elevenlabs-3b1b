@@ -1,0 +1,90 @@
+# Agentic system design topic: same as system_design plus how to build an eval set and evaluate.
+# Eval sections follow Hamel Husain's evals FAQ: https://hamel.dev/blog/posts/evals-faq/
+# Keep total narration under ~700 words (5 minutes). Check with: explainer validate my-topic
+# See topics/agentic-wholesale-order-agent.yaml for a finished example.
+kind: agentic
+title: Design a Research Agent
+
+sections:
+  - role: hook
+    heading: ""
+    narration: >
+      One or two sentences on what the agent does and why it is hard.
+    visual: {type: title, title: Design a Research Agent, subtitle: "and how to evaluate it"}
+
+  - role: functional
+    heading: Functional requirements
+    narration: >
+      What the agent must do: inputs, tools, outputs.
+    visual: {type: bullets, items: ["First capability", "Second capability"]}
+
+  - role: non_functional
+    heading: Non-functional requirements
+    narration: >
+      Correctness, latency, cost per task, safety, auditability.
+    visual:
+      type: cards
+      items: [{title: Correct, body: "..."}, {title: Cheap, body: "..."}]
+
+  - role: high_level
+    heading: High-level design
+    narration: >
+      The simplest version: a model in a loop with tools.
+    visual:
+      type: diagram
+      nodes:
+        - {id: user, label: User, col: 0, row: 0, tone: accent}
+        - {id: agent, label: LLM agent, col: 1, row: 0, tone: agent}
+        - {id: tool, label: Tool, col: 2, row: 0, tone: data}
+      edges: [[user, agent], [agent, tool]]
+
+  - role: issues
+    heading: What breaks at scale
+    narration: >
+      At most three: hallucination, unsafe actions, cost and latency, context limits...
+    visual:
+      type: cards
+      numbered: true
+      tone: danger
+      items: [{title: "Problem one"}, {title: "Problem two"}, {title: "Problem three"}]
+
+  - role: deep_dive
+    heading: "Fix 1: ..."
+    narration: >
+      How to solve problem one.
+    visual: {type: bullets, items: ["Change", "Trade-off"]}
+
+  - role: eval_dataset
+    heading: Building the eval dataset
+    narration: >
+      Error analysis first: log real traces, read about a hundred, open coding, then
+      axial coding into failure modes. Fill gaps with synthetic inputs from
+      dimensions combined into tuples.
+    visual:
+      type: diagram
+      nodes:
+        - {id: traces, label: Real traces, col: 0, row: 0, shape: db, cue: real traces}
+        - {id: open, label: Open coding, col: 1, row: 0, cue: open coding}
+        - {id: axial, label: Axial coding, col: 2, row: 0, cue: axial coding}
+        - {id: modes, label: Failure modes, col: 3, row: 0, tone: danger, cue: failure modes}
+      edges: [[traces, open], [open, axial], [axial, modes]]
+
+  - role: evaluation
+    heading: Evaluating the agent
+    narration: >
+      Code assertions for objective checks, binary LLM judges validated against human
+      labels, a transition matrix for agent steps, all run in CI and on production samples.
+    visual:
+      type: cards
+      per_row: 2
+      items:
+        - {title: Code assertions, tone: good}
+        - {title: "LLM judge: pass/fail", body: "Check TPR / TNR vs human labels", tone: agent}
+        - {title: Transition matrix, body: "Where do runs first fail?", tone: accent}
+        - {title: CI + production, tone: data}
+
+  - role: extensions
+    heading: Go further on your own
+    narration: >
+      A handful of directions to study on your own.
+    visual: {type: bullets, items: [{text: "Extension one", tone: extra}]}

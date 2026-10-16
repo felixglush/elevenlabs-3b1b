@@ -1,0 +1,51 @@
+# NeetCode / LeetCode problem. Copy with: explainer new two-sum --kind neetcode
+# Keep it short: 250-450 words is plenty. See topics/neetcode-top-k-frequent.yaml.
+kind: neetcode
+title: Two Sum
+
+sections:
+  - role: hook
+    heading: Two Sum
+    narration: >
+      State the problem with a tiny example.
+    visual:
+      type: array
+      label: nums
+      values: [2, 7, 11, 15]
+      steps:
+        - {highlight: [0, 1], note: "target = 9  ->  [0, 1]"}
+
+  - role: brute_force      # optional
+    heading: The obvious way
+    narration: >
+      The brute force solution and why it is slow.
+    visual: {type: bullets, items: ["Check every pair: O(n^2)"]}
+
+  - role: insight
+    heading: The key insight
+    narration: >
+      The one observation that unlocks the fast solution.
+    visual: {type: cards, items: [{title: "Insight", body: "...", tone: accent}]}
+
+  - role: walkthrough      # 1 to 3 of these
+    heading: Walkthrough
+    narration: >
+      Narrate each step of the algorithm on the example.
+    visual:
+      type: array
+      values: [2, 7, 11, 15]
+      steps:   # each step highlights indices and shows a note
+        - {highlight: [0], note: "need 7, seen {}"}
+        - {highlight: [1], tone: good, note: "need 2, seen {2: 0}  ->  found"}
+
+  - role: complexity
+    heading: Complexity
+    narration: >
+      Time and space, and why.
+    visual: {type: cards, items: [{title: "Time: O(n)", tone: good}, {title: "Space: O(n)", tone: data}]}
+
+  - role: extensions
+    heading: Try these next
+    narration: >
+      Related problems and variations.
+    visual: {type: bullets, items: [{text: "3Sum", tone: extra}]}

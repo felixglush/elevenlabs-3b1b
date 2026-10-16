@@ -1,0 +1,217 @@
+kind: agentic
+title: Design a Wholesale Order Agent
+# Optional ElevenLabs settings for this topic (defaults are in explainer/tts.py)
+voice:
+  voice_id: JBFqnCBsd6RMkjVDRZzb
+  speed: 1.0
+
+sections:
+  - role: hook
+    heading: ""
+    narration: >
+      A wholesale buyer emails: "Same as last month, but double the oat milk, and
+      can I get the case price?" A human rep turns that into an order in ten minutes.
+      Let's design an agent that does it in seconds, without ever inventing a price.
+    visual:
+      type: title
+      title: Design a Wholesale Order Agent
+      subtitle: An LLM agent on top of Shopify B2B, and how to evaluate it
+      subtitle_cue: design an agent
+
+  - role: functional
+    heading: Functional requirements
+    narration: >
+      First, what must it do? It reads buyer messages from email or chat. It looks up
+      the buyer's company, their catalog and their negotiated price list. It drafts an
+      order in Shopify. And it replies to the buyer with a summary, or asks a
+      clarifying question when the request is ambiguous.
+    visual:
+      type: bullets
+      items:
+        - {text: "Read buyer messages (email, chat)", cue: reads buyer messages}
+        - {text: "Look up company, catalog and price list", cue: looks up}
+        - {text: "Draft an order in Shopify B2B", cue: drafts an order}
+        - {text: "Reply with a summary, or ask a clarifying question", cue: replies to the buyer}
+
+  - role: non_functional
+    heading: Non-functional requirements
+    narration: >
+      Now the qualities. Correctness beats everything: a wrong price costs real money.
+      A reply should land within a minute. We expect about fifty thousand messages a
+      day, with spikes at month end. And every action must be auditable, so a rep can
+      see exactly why the agent did what it did.
+    visual:
+      type: cards
+      items:
+        - {title: Correct, body: "Prices and SKUs always come from the system of record", tone: danger, cue: correctness}
+        - {title: Fast, body: "Reply in under a minute", cue: within a minute}
+        - {title: Scales, body: "~50k messages a day, month-end spikes", tone: data, cue: fifty thousand}
+        - {title: Auditable, body: "Every tool call and decision is logged", tone: agent, cue: auditable}
+      per_row: 4
+
+  - role: high_level
+    heading: High-level design
+    narration: >
+      Here is the simplest version. A webhook receives the message and hands it to the
+      agent, a language model in a loop with tools. The tools call Shopify's B2B API:
+      search the catalog, fetch the company's price list, and create a draft order.
+      Finally the agent writes the reply back to the buyer.
+    visual:
+      type: diagram
+      nodes:
+        - {id: buyer, label: Buyer, col: 0, row: 0, tone: accent}
+        - {id: hook, label: Webhook, col: 1, row: 0, cue: webhook}
+        - {id: agent, label: LLM agent, col: 2, row: 0, tone: agent, cue: the agent}
+        - {id: catalog, label: Catalog search, col: 3.4, row: -1, tone: data, cue: search the catalog}
+        - {id: prices, label: Price list, col: 3.4, row: 0, tone: data, cue: price list}
+        - {id: draft, label: Draft order, col: 3.4, row: 1, tone: good, cue: draft order}
+      edges:
+        - [buyer, hook]
+        - [hook, agent]
+        - [agent, catalog]
+        - [agent, prices]
+        - [agent, draft]
+        - {from: agent, to: buyer, label: reply, bend: -1.2, cue: writes the reply}
+
+  - role: issues
+    heading: What breaks at scale
+    narration: >
+      This works in a demo, but three things break in production. One: the model can
+      hallucinate a SKU or a price. Two: an agent that places orders directly can make
+      expensive mistakes we cannot undo. Three: at month end, latency and model costs
+      explode.
+    visual:
+      type: cards
+      numbered: true
+      tone: danger
+      items:
+        - {title: Hallucinated prices, body: "The model invents a SKU or a discount", cue: hallucinate}
+        - {title: Irreversible actions, body: "A bad order ships before anyone notices", cue: expensive mistakes}
+        - {title: Latency and cost, body: "Month-end spikes overwhelm the model", cue: latency}
+
+  - role: deep_dive
+    heading: "Fix 1: the model never writes a price"
+    narration: >
+      Fix one. The model is only allowed to choose products and quantities. Plain code
+      builds the order: it resolves each SKU in the catalog and computes the total from
+      the price list. If a SKU doesn't exist, the tool returns an error and the agent
+      must ask the buyer.
+    visual:
+      type: diagram
+      nodes:
+        - {id: agent, label: "LLM: SKUs + qty", col: 0, row: 0, tone: agent}
+        - {id: builder, label: Order builder (code), col: 1.2, row: 0, tone: good, cue: plain code}
+        - {id: prices, label: Price list, col: 2.4, row: -0.9, tone: data, cue: price list}
+        - {id: catalog, label: Catalog, col: 2.4, row: 0.9, tone: data, cue: in the catalog}
+      edges:
+        - [agent, builder]
+        - [builder, catalog]
+        - [builder, prices]
+      highlight: [builder]
+      highlight_cue: computes the total
+      note: Unknown SKU means a tool error, then a clarifying question
+      note_cue: doesn't exist
+
+  - role: deep_dive
+    heading: "Fix 2: drafts, approvals, idempotency"
+    narration: >
+      Fix two. The agent can only create draft orders. Small orders from trusted buyers
+      are approved automatically; anything large or unusual goes to a rep's review queue.
+      Each draft carries an idempotency key built from the message ID, so a retry never
+      creates a duplicate order.
+    visual:
+      type: diagram
+      nodes:
+        - {id: agent, label: Agent, col: 0, row: 0, tone: agent}
+        - {id: draft, label: Draft order, col: 1, row: 0, cue: draft orders}
+        - {id: auto, label: Auto-approve, col: 2.1, row: -0.8, tone: good, cue: approved automatically}
+        - {id: review, label: Rep review queue, col: 2.1, row: 0.8, tone: accent, shape: queue, cue: review queue}
+      edges:
+        - [agent, draft]
+        - {from: draft, to: auto, label: small}
+        - {from: draft, to: review, label: large}
+      note: "Idempotency key = hash(message id)"
+      note_cue: idempotency key
+
+  - role: deep_dive
+    heading: "Fix 3: queue, cache, route"
+    narration: >
+      Fix three. Put a queue in front of the agent so spikes are absorbed, and scale
+      workers on queue depth. Cache catalogs and price lists per company. And route:
+      a small, cheap model handles simple reorders, and only messy threads go to the
+      large model.
+    visual:
+      type: diagram
+      nodes:
+        - {id: hook, label: Webhook, col: 0, row: 0}
+        - {id: queue, label: Queue, col: 1, row: 0, shape: queue, tone: data, cue: a queue}
+        - {id: router, label: Router, col: 2, row: 0, tone: accent, cue: route}
+        - {id: small, label: Small model, col: 3, row: -0.8, tone: good, cue: small, cheap model}
+        - {id: large, label: Large model, col: 3, row: 0.8, tone: agent, cue: large model}
+        - {id: cache, label: Price cache, col: 1, row: 1.2, shape: db, tone: data, cue: cache}
+      edges:
+        - [hook, queue]
+        - [queue, router]
+        - [router, small]
+        - [router, large]
+
+  - role: eval_dataset
+    heading: Building the eval dataset
+    narration: >
+      How do we know it works? Start with error analysis, not metrics. Log real traces,
+      then read about a hundred of them. Write a free-form note on the first thing that
+      went wrong in each: that's open coding. Then group the notes into failure modes:
+      that's axial coding. To fill gaps, pick dimensions like buyer type, message style
+      and complication, combine them into tuples, and turn each tuple into a synthetic email.
+    visual:
+      type: diagram
+      nodes:
+        - {id: traces, label: Real traces, col: 0, row: 0, shape: db, tone: data, cue: real traces}
+        - {id: open, label: Open coding, col: 1, row: 0, cue: open coding}
+        - {id: axial, label: Axial coding, col: 2, row: 0, cue: axial coding}
+        - {id: modes, label: Failure modes, col: 3, row: 0, tone: danger, cue: failure modes}
+        - {id: dims, label: Dimensions, col: 0, row: 1.1, tone: agent, cue: dimensions}
+        - {id: tuples, label: Tuples, col: 1, row: 1.1, tone: agent, cue: into tuples}
+        - {id: synth, label: Synthetic emails, col: 2, row: 1.1, tone: agent, cue: synthetic email}
+      edges:
+        - [traces, open]
+        - [open, axial]
+        - [axial, modes]
+        - [dims, tuples]
+        - [tuples, synth]
+      note: "(new buyer, terse, out of stock) -> one synthetic email"
+      note_cue: each tuple
+
+  - role: evaluation
+    heading: Evaluating the agent
+    narration: >
+      Then build evaluators for each failure mode. Use code assertions for anything
+      objective, like totals matching the price list. Use an LLM judge with a binary
+      pass or fail for fuzzy things like tone, and check it against human labels by
+      measuring true positive and true negative rates. For the agent's steps, a transition
+      matrix shows where runs first fail. Run all of it in CI, and on sampled production traffic.
+    visual:
+      type: cards
+      tone: agent
+      per_row: 2
+      items:
+        - {title: Code assertions, body: "SKUs exist, totals match the price list", tone: good, cue: code assertions}
+        - {title: "LLM judge: pass/fail", body: "Aligned to human labels via TPR and TNR", tone: agent, cue: LLM judge}
+        - {title: Transition matrix, body: "parse -> lookup -> draft -> reply: where does it first fail?", tone: accent, cue: transition matrix}
+        - {title: CI + production, body: "Every prompt change, plus sampled live traces", tone: data, cue: in CI}
+
+  - role: extensions
+    heading: Go further on your own
+    narration: >
+      A few directions to explore on your own: multi-turn negotiation with approval
+      limits, memory of each buyer's habits, prompt injection hidden in emails,
+      tracking the cost of every order, and replaying production traces against new
+      prompts before you ship them.
+    visual:
+      type: bullets
+      items:
+        - {text: "Negotiation with approval limits", tone: extra, cue: negotiation}
+        - {text: "Per-buyer memory of habits", tone: extra, cue: memory}
+        - {text: "Prompt injection in incoming email", tone: extra, cue: prompt injection}
+        - {text: "Cost per order tracking", tone: extra, cue: cost of every order}
+        - {text: "Replay traces against new prompts", tone: extra, cue: replaying}

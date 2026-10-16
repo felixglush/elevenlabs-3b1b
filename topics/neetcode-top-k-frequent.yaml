@@ -1,0 +1,100 @@
+kind: neetcode
+title: Top K Frequent Elements
+# LeetCode 347 · NeetCode 150 · Arrays & Hashing
+
+sections:
+  - role: hook
+    heading: "Top K Frequent Elements"
+    narration: >
+      Given an array of numbers and an integer k, return the k numbers that appear
+      most often. For one, one, one, two, two, three with k equal to two, the answer
+      is one and two.
+    visual:
+      type: array
+      label: nums
+      values: [1, 1, 1, 2, 2, 3]
+      steps:
+        - {highlight: [0, 1, 2, 3, 4], note: "k = 2  ->  answer [1, 2]", cue: the answer}
+
+  - role: brute_force
+    heading: The obvious way
+    narration: >
+      The obvious approach: count every number with a hash map, sort the numbers by
+      count, and take the first k. Counting is linear, but the sort costs n log n.
+      Can we skip the sort?
+    visual:
+      type: bullets
+      items:
+        - {text: "Count with a hash map: O(n)", cue: count every number}
+        - {text: "Sort by count: O(n log n)", tone: danger, cue: sort the numbers}
+        - {text: "Take the first k", cue: take the first}
+
+  - role: insight
+    heading: The key insight
+    narration: >
+      Here's the trick. A number can appear at most n times. So instead of sorting,
+      make an array of buckets indexed by frequency, from zero to n. Bucket i holds
+      every number that appears exactly i times. That's bucket sort, and it's linear.
+    visual:
+      type: cards
+      items:
+        - {title: "Frequency <= n", body: "Counts live in a small, known range", tone: accent, cue: at most n times}
+        - {title: "Buckets by frequency", body: "bucket[i] = numbers seen exactly i times", tone: good, cue: array of buckets}
+        - {title: "Bucket sort", body: "No comparisons, so O(n)", tone: data, cue: bucket sort}
+
+  - role: walkthrough
+    heading: "Step 1: count"
+    narration: >
+      Walk through the array once. One appears three times. Two appears twice. Three
+      appears once.
+    visual:
+      type: array
+      label: nums
+      values: [1, 1, 1, 2, 2, 3]
+      steps:
+        - {highlight: [0, 1, 2], note: "count[1] = 3", cue: one appears}
+        - {highlight: [3, 4], tone: good, note: "count[2] = 2", cue: two appears}
+        - {highlight: [5], tone: data, note: "count[3] = 1", cue: three appears}
+
+  - role: walkthrough
+    heading: "Step 2: fill buckets, read from the top"
+    narration: >
+      Now drop each number into the bucket for its count. Three goes in bucket one,
+      two in bucket two, one in bucket three. Then scan from the highest bucket down,
+      collecting numbers until we have k. We get one, then two. Done.
+    visual:
+      type: table
+      columns: [frequency, numbers]
+      widths: [3, 4]
+      rows:
+        - {cells: ["3", "[1]   <- read first"], cue: one in bucket three}
+        - {cells: ["2", "[2]   <- read second"], cue: two in bucket two}
+        - {cells: ["1", "[3]"], cue: three goes in bucket one}
+        - {cells: ["0, 4, 5, 6", "empty"], cue: scan from the highest}
+
+  - role: complexity
+    heading: Complexity
+    narration: >
+      Counting is one pass, filling buckets is one pass, and scanning the buckets is at
+      most n plus one steps. So time is O of n, and space is O of n for the map and the
+      buckets.
+    visual:
+      type: cards
+      items:
+        - {title: "Time: O(n)", body: "Three linear passes", tone: good, cue: time is}
+        - {title: "Space: O(n)", body: "Hash map plus n + 1 buckets", tone: data, cue: space is}
+
+  - role: extensions
+    heading: Try these next
+    narration: >
+      To go further: solve it with a min-heap of size k in n log k, try quickselect for
+      average linear time, then Top K Frequent Words, Kth Largest Element, and finally
+      the system design version: heavy hitters over a stream with a count-min sketch.
+    visual:
+      type: bullets
+      items:
+        - {text: "Min-heap of size k: O(n log k)", tone: extra, cue: min-heap}
+        - {text: "Quickselect: O(n) average", tone: extra, cue: quickselect}
+        - {text: "LC 692 Top K Frequent Words", tone: extra, cue: Top K Frequent Words}
+        - {text: "LC 215 Kth Largest Element", tone: extra, cue: Kth Largest}
+        - {text: "Heavy hitters on a stream (count-min sketch)", tone: extra, cue: heavy hitters}
